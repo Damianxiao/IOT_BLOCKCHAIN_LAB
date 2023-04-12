@@ -1,6 +1,7 @@
 import threading
 import time
 import hashlib
+import time
 
 start_time = time.time()
 
@@ -12,6 +13,11 @@ class Node:
         self.difficulty = difficulty
         self.shares = None
         self.nonce = 0
+        
+        # 创建cgroup并设置CPU限制
+        cg_name = f"node{port}_cg"
+        os.system(f"sudo cgcreate -g cpu:{cg_name}")
+        os.system(f"sudo cgset -r cpu.cfs_quota_us={cpu_limit} {cg_name}")
 
     def add_peer(self, peer):
         if peer not in self.peers:
@@ -61,6 +67,7 @@ class Node:
         return shares
 
     def evaluate_node_performance(self):
+        os.system(f"sudo cgclassify -g cpu:node{self.port}_cg {os.getpid()}")
         nonce = 0
         shares = self.calculate_shares(nonce)
         print(f"Node {self.port} shares: {shares}")
@@ -73,10 +80,18 @@ class Node:
 if __name__ == "__main__":
     
     nodes = [
-        {"id": 1, "port": 5000, "difficulty": "000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"},
-        {"id": 2, "port": 5001, "difficulty": "000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"},
-        {"id": 3, "port": 5002, "difficulty": "000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}
-    ]
+        {"id": 1, "port": 5000, "difficulty": "000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "cpu_limit": 50000},
+        {"id": 2, "port": 5001, "difficulty": "000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "cpu_limit": 75000},
+        {"id": 3, "port": 5002, "difficulty": "000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "cpu_limit": 25000},
+        {"id": 4, "port": 5003, "difficulty": "000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "cpu_limit": 30000},
+        {"id": 5, "port": 5004, "difficulty": "000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "cpu_limit": 40000},
+        {"id": 6, "port": 5005, "difficulty": "000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "cpu_limit": 20000},
+        {"id": 7, "port": 5006, "difficulty": "000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "cpu_limit": 15000},
+        {"id": 8, "port": 5007, "difficulty": "000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "cpu_limit": 80000},
+        {"id": 9, "port": 5008, "difficulty": "000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "cpu_limit": 60000},
+        {"id": 10, "port": 5009, "difficulty": "000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "cpu_limit": 35000}
+        ]
+
     node_objects = []
     for node in nodes:
         node_object = Node(node["port"], node["difficulty"])
